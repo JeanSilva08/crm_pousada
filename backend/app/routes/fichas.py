@@ -1,5 +1,6 @@
 import os
 import uuid
+from typing import List  # <-- Adicionado para a listagem
 from shutil import copyfileobj
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
@@ -49,3 +50,18 @@ def upload_ficha(file: UploadFile = File(...), db: Session = Depends(get_db)):
     db.refresh(nova_ficha)
 
     return nova_ficha
+
+
+# 📄 NOVA ROTA: Listar todas as fichas enviadas (Bom para a dashboard)
+@router.get("/", response_model=List[FichaResponse])
+def listar_fichas(db: Session = Depends(get_db)):
+    return db.query(Ficha).all()
+
+
+# 🔍 NOVA ROTA: Buscar os detalhes de uma única ficha pelo ID
+@router.get("/{ficha_id}", response_model=FichaResponse)
+def obter_ficha_por_id(ficha_id: int, db: Session = Depends(get_db)):
+    ficha = db.query(Ficha).filter(Ficha.id == ficha_id).first()
+    if not ficha:
+        raise HTTPException(status_code=404, detail="Ficha não encontrada.")
+    return ficha
